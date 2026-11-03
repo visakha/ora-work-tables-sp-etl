@@ -1,0 +1,80 @@
+-- ============================================================================
+-- sp_snow_step_TRS_PHN_S40_PHONES  --  CONFIG-DRIVEN STEP DRIVER REFACTOR (TRS)
+--
+-- Mapping: m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr, workflow wf_TRS_Stage_Load_1_Ongoing, step 40.
+-- Step name (checkpoint): PHONES.
+--
+-- WHAT THIS STEP PRODUCES
+--   WRK_TRS_PHN_S4_PHONES: PHONES -- translate, describe, drop nulls
+--
+-- INPUTS / DEPENDENCY DECLARATION
+--   P_INPUT_TABLES lists WORK-TABLE inputs only (pipe-delimited). Default: 'WRK_TRS_PHN_S3_CHECKED'.
+--   Snowflake cannot parameterise table names in static SQL, so
+--   P_INPUT_TABLES is a dependency declaration + runtime check, NOT
+--   dynamic SQL: the CTAS below still names its sources literally, as
+--   in the current main procedure.
+--
+-- BUSINESS SQL
+--   The CTAS below is the current step-40 SELECT verbatim. Only
+--   substitution: :l_run_ts -> :P_RUN_TS (where used); :c_mapping is
+--   the local constant below. No business expression, filter, guard
+--   or column list was changed. This step uses original parameters:
+--   none.
+--
+-- FRAMEWORK
+--   No exception block (errors propagate to the driver handler), no
+--   transactions, no target writes. This proc writes its own checkpoint
+--   in the 10-argument form. P_JOB_RUN_ID is present in every new proc
+--   in this refactor.
+-- ============================================================================
+CREATE OR REPLACE FUNCTION sp_snow_step_TRS_PHN_S40_PHONES (P_JOB_RUN_ID IN VARCHAR2 DEFAULT NULL, P_RUN_TS IN TIMESTAMP DEFAULT NULL, P_INPUT_TABLES IN VARCHAR2 DEFAULT 'WRK_TRS_PHN_S3_CHECKED') RETURN NUMBER AUTHID CURRENT_USER AS
+    c_source VARCHAR2(4000) DEFAULT 'TRS';
+    c_workflow VARCHAR2(4000) DEFAULT 'wf_TRS_Stage_Load_1_Ongoing';
+    c_mapping VARCHAR2(4000) DEFAULT 'm_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr';
+    l_rows NUMBER DEFAULT 0;
+    l_missing VARCHAR2(4000) DEFAULT NULL;
+    l_probe_sql VARCHAR2(4000);
+    l_probe_dummy NUMBER;
+BEGIN
+    -- ---- Input existence check (skipped when P_INPUT_TABLES is empty)
+    IF (P_INPUT_TABLES IS NOT NULL AND TRIM(P_INPUT_TABLES) <> '') THEN
+        SELECT LISTAGG(tbl, ', ') WITHIN GROUP (ORDER BY tbl) INTO l_missing FROM (SELECT UPPER(TRIM(REGEXP_SUBSTR(P_INPUT_TABLES, '[^|]+', 1, LEVEL))) AS tbl FROM DUAL CONNECT BY REGEXP_SUBSTR(P_INPUT_TABLES, '[^|]+', 1, LEVEL) IS NOT NULL) f WHERE NOT EXISTS (SELECT 1 FROM ALL_TABLES t WHERE t.OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AND t.TABLE_NAME = f.tbl);
+        IF (l_missing IS NOT NULL) THEN
+            l_probe_sql := 'SELECT COUNT(*) FROM ' || TRIM(REGEXP_SUBSTR(l_missing, '[^,]+', 1, 1));
+            EXECUTE IMMEDIATE l_probe_sql INTO l_probe_dummy;
+        END IF;
+    END IF;
+
+    -- ---- Step 40: PHONES (verbatim from current main)
+BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE WRK_TRS_PHN_S4_PHONES';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE <> -942 THEN RAISE; END IF;
+    END;
+        EXECUTE IMMEDIATE q'[CREATE TABLE WRK_TRS_PHN_S4_PHONES AS WITH
+    lkp_exc AS (SELECT * FROM TABLE(fn_snow_helper40_common())),
+    lkp_lcv AS (SELECT * FROM TABLE(fn_snow_helper45_common())),
+    phones AS (
+        SELECT p.PERIOD_START_DATE AS period_start_date, p.PTY_FK AS pty_fk, p.PREF_LVL AS pref_lvl,
+               p.USG_TP AS usg_tp, p.PHN_TP AS phn_tp, p.phn_num, p.SRC_SYS AS src_sys_in,
+               p.CASE_NUMBER AS case_number, p.dq_exception_code, xp.EXCEPTION_DESC AS dq_exception,
+               NVL(p.PTY_FK, '') || '|Member'                                                 AS pty_rle_fk,
+               NVL(p.PTY_FK, '') || '|Member|' || NVL(p.PHN_TP, '') || '|' || NVL(u.MSTR_REF_CODE, '') || '|'
+               || p.phn_num                                                                   AS pkey_src_object
+          FROM WRK_TRS_PHN_S3_CHECKED p
+          LEFT JOIN lkp_lcv u ON u.CODE_TYPE = 'PHN_USG_TP' AND u.MSTR_REF_CODE = p.USG_TP = 1 AND u.SRC_SYS = p.SRC_SYS
+          LEFT JOIN lkp_exc xp ON xp.EXCEPTION_CODE = p.dq_exception_code
+         WHERE p.phn_num IS NOT NULL
+    )
+    SELECT ph.*,
+           CASE WHEN ROW_NUMBER() OVER (PARTITION BY ph.pty_fk, ph.case_number, ph.usg_tp, 'Bad Value', ph.dq_exception_code
+                                  ORDER BY ph.period_start_date DESC) = 1 THEN 1 ELSE 0 END AS uq_exc
+      FROM phones ph]';
+    SELECT COUNT(*) INTO l_rows FROM WRK_TRS_PHN_S4_PHONES;
+    sp_etl_checkpoint(c_source, P_JOB_RUN_ID, c_workflow, c_mapping, 'WORKING',
+        'PHONES', 'COMPLETED', NULL, 'Step 40 complete.', NULL);
+    RETURN l_rows;
+END sp_snow_step_TRS_PHN_S40_PHONES;
+/
+

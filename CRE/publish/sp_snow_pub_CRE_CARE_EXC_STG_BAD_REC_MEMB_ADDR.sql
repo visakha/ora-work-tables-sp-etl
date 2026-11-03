@@ -1,0 +1,44 @@
+-- ============================================================================
+-- sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_ADDR  --  CONFIG-DRIVEN STEP DRIVER REFACTOR (CRE)
+--
+-- Mapping: m_Tgt_C_S_CRE_CARE_Clients, workflow wf_CRE_Stage_Load_Ongoing.
+-- Publish branch STEP_NO 160, checkpoint STEP_NAME PUBLISH_EXC_ADDR.
+-- Target: EXC_STG_BAD_REC_MEMB. Kind: NON-SPINE (exception log only; the member itself is still loaded unless the member itself is invalid).
+-- Branch 60k of the original publish, in original order.
+--
+-- INPUTS
+--   Reads ONLY WRK_CRE_CARE_S5_KEYED (P_INPUT_TABLES default). The
+--   INSERT reads the run_ts / mapping_name columns materialised in step
+--   50; it references neither original parameter nor the run timestamp
+--   directly, so P_RUN_TS is carried for a uniform driver call
+--   signature and is unused in the body (stated, not hidden).
+--
+-- BUSINESS SQL
+--   The INSERT below is the current branch-60k INSERT verbatim: same
+--   columns, values and WHERE guard (grp_addr_exc). No business expression,
+--   filter, guard or column list was changed.
+--
+-- FRAMEWORK RULE
+--   NO transaction control and NO checkpoint calls in this proc. The
+--   driver calls it inside ONE publish transaction (all branches
+--   together, so a publish either lands completely or not at all),
+--   COMMITs, and only then checkpoints this branch with the returned
+--   row count. Never call a checkpoint between BEGIN TRANSACTION and
+--   COMMIT.
+-- ============================================================================
+CREATE OR REPLACE FUNCTION sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_ADDR (P_JOB_RUN_ID IN VARCHAR2, P_RUN_TS IN TIMESTAMP, P_INPUT_TABLES IN VARCHAR2 DEFAULT 'WRK_CRE_CARE_S5_KEYED') RETURN NUMBER AUTHID CURRENT_USER AS
+BEGIN
+    INSERT INTO EXC_STG_BAD_REC_MEMB
+           (SRC_SYS, RUN_DATE, MAPPING_NAME, ADDRESS_DR_MAILABILITY_SCORE, ADDRESS_DR_ERROR_DESC,
+            ADDRESS_DR_ERROR_CODE, ATTRIBUTE_NAME, ATTRIBUTE_VALUE, SRC_SYS_ID_1, ADDRESS_LINE_1, ADDRESS_CITY,
+            ADDRESS_COUNTY, ADDRESS_STATE, ADDRESS_ZIP, ADDRESS_ZIP_EXT, ADDRESS_COUNTRY, EXCEPTION_CODE,
+            EXCEPTION_DESC, EXCEPTION_TYPE)
+    SELECT src_sys, run_ts, mapping_name, a_dr_mailability_score, a_dr_error_desc, a_dr_error_code,
+           attr_address, addr_attribute_value, CARE_ID, STREET, CITY, CNTY, STATE, ZIP, ZIPSUF, src_cntry,
+           addr_exception_code, addr_exception_desc, addr_exception_type
+      FROM WRK_CRE_CARE_S5_KEYED
+     WHERE grp_addr_exc = 1;
+    RETURN SQL%ROWCOUNT;
+END sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_ADDR;
+/
+

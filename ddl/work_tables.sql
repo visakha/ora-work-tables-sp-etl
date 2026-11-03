@@ -1,0 +1,859 @@
+-- ============================================================================
+-- work_tables.sql — WORK-TABLE INVENTORY (no DDL is fabricated here)
+--
+-- There is deliberately NO CREATE TABLE statement in this file.
+-- The Snowflake source tree contains no work-table DDL, because work
+-- tables are NOT pre-created: each step creates its WRK table at runtime
+-- with DROP-if-exists + CREATE TABLE AS (CTAS) — see the step procedures
+-- themselves (in Oracle: EXECUTE IMMEDIATE DROP + EXECUTE IMMEDIATE CTAS).
+-- The CTAS SELECT list IS the column definition: Oracle infers the column
+-- names and types at runtime, exactly as Snowflake did. Pre-creating these
+-- tables from invented column lists would be wrong — the types cannot be
+-- derived without running the CTAS — so this file inventories them instead.
+--
+-- Lifecycle (see ORA-WORK-TABLES-TDD.md §5 for the full rules):
+--   * Step 5 of each mapping's driver DROPS every WRK table that mapping's
+--     steps produce, regardless of IS_RUN_ENABLED flags (drops-all).
+--   * The producing step then re-creates its WRK table with DROP + CTAS.
+--   * WRK tables are NOT dropped at the end of a run: they survive for
+--     inspection until the next run of the same mapping cleans them.
+--   * Publish branches never read or write WRK tables except as their
+--     P_INPUT_TABLES source; they INSERT into target tables only.
+--
+-- How to read an entry:
+--   -- WRK_<name>
+--   --   produced by : <step proc> (mapping, workflow)
+--   --   CTAS in      : <oracle file path> line <n> (the SELECT list defines the columns)
+--   --   dropped by  : step 5 of driver <driver proc> (same mapping)
+--   --   consumed by : <units that read it, in workflow order> (or 'none — terminal')
+--
+-- Counts: 152 WRK tables, all runtime-created, zero pre-defined.
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Workflow: wf_TRS_Stage_Load_1_Ongoing (63 WRK tables)
+-- ----------------------------------------------------------------------------
+--   Mapping: m_Tgt_C_S_TRS_Pty_OnGoing (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_OnGoing)
+--   WRK table: WRK_TRS_PTY_S1_SRC
+--     produced by : sp_snow_step_TRS_PTY_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PTY_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_OnGoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_PTY_S20_DQ
+--   WRK table: WRK_TRS_PTY_S2_DQ
+--     produced by : sp_snow_step_TRS_PTY_S20_DQ
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PTY_S20_DQ.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_OnGoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_PTY_S30_ROUTER; wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_PTY_S40_DEDUP
+--   WRK table: WRK_TRS_PTY_S3_ROUTER
+--     produced by : sp_snow_step_TRS_PTY_S30_ROUTER
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PTY_S30_ROUTER.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_OnGoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_PTY_EXC_STG_BAD_REC_MEMB_NAME; wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_pub_TRS_PTY_EXC_STG_BAD_REC_MEMB_GENDER; wf_TRS_Stage_Load_1_Ongoing step 70 sp_snow_pub_TRS_PTY_EXC_STG_BAD_REC_MEMB_DEATH; wf_TRS_Stage_Load_1_Ongoing step 80 sp_snow_pub_TRS_PTY_EXC_STG_BAD_REC_MEMB_BIRTH
+--   WRK table: WRK_TRS_PTY_S4_DEDUP
+--     produced by : sp_snow_step_TRS_PTY_S40_DEDUP
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PTY_S40_DEDUP.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_OnGoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 90 sp_snow_pub_TRS_PTY_C_S_TRS_PTY; wf_TRS_Stage_Load_1_Ongoing step 100 sp_snow_pub_TRS_PTY_C_S_TRS_PTY_RLE; wf_TRS_Stage_Load_1_Ongoing step 110 sp_snow_pub_TRS_PTY_STG_TRS_VALID_MEMBERS; wf_TRS_Stage_Load_1_Ongoing step 120 sp_snow_pub_TRS_PTY_EXC_STG_BAD_REC_MEMB_RACE; wf_TRS_Stage_Load_1_Ongoing step 130 sp_snow_pub_TRS_PTY_EXC_STG_BAD_REC_MEMB_ETHNICITY
+--   Mapping: m_Tgt_C_S_TRS_Pty_Deactivation_1 (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Deactivation_1)
+--   WRK table: WRK_TRS_DEACT1_S10_DEACTV
+--     produced by : sp_snow_step_TRS_PTYDEACT_S10_DEACTV
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PTYDEACT_S10_DEACTV.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Deactivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_PTYDEACT_S20_DEACTV_ID
+--   WRK table: WRK_TRS_DEACT1_S20_DEACTV_ID
+--     produced by : sp_snow_step_TRS_PTYDEACT_S20_DEACTV_ID
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PTYDEACT_S20_DEACTV_ID.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Deactivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_PTYDEACT_S30_READY
+--   WRK table: WRK_TRS_DEACT1_S30_READY
+--     produced by : sp_snow_step_TRS_PTYDEACT_S30_READY
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PTYDEACT_S30_READY.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Deactivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_pub_TRS_PTYDEACT_STG_TRS_DEACTIVED_MEMBERS
+--   Mapping: m_Tgt_C_S_TRS_Pty_Rle_TOA (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_TOA)
+--   WRK table: WRK_TRS_TOA_S10_RAW
+--     produced by : sp_snow_step_TRS_TOA_S10_RAW
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_TOA_S10_RAW.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_TOA
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_TOA_S20_LATEST
+--   WRK table: WRK_TRS_TOA_S20_SRC
+--     produced by : sp_snow_step_TRS_TOA_S20_LATEST
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_TOA_S20_LATEST.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_TOA
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_TOA_S30_KEYED
+--   WRK table: WRK_TRS_TOA_S30_KEYED
+--     produced by : sp_snow_step_TRS_TOA_S30_KEYED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_TOA_S30_KEYED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_TOA
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_TOA_S40_RANKED
+--   WRK table: WRK_TRS_TOA_S40_RANKED
+--     produced by : sp_snow_step_TRS_TOA_S40_RANKED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_TOA_S40_RANKED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_TOA
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_TOA_EXC_STG_BAD_REC_MEMB_BAD_VALUE; wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_pub_TRS_TOA_EXC_STG_BAD_REC_MEMB_DATES; wf_TRS_Stage_Load_1_Ongoing step 70 sp_snow_pub_TRS_TOA_C_S_TRS_PTY_RLE_TOA
+--   Mapping: m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem)
+--   WRK table: WRK_TRS_REL1_S1_SRC
+--     produced by : sp_snow_step_TRS_REL1_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL1_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_REL1_S20_KEYED
+--   WRK table: WRK_TRS_REL1_S2_KEYED
+--     produced by : sp_snow_step_TRS_REL1_S20_KEYED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL1_S20_KEYED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_REL1_S30_ROUTER; wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_REL1_S40_CONSOL
+--   WRK table: WRK_TRS_REL1_S3_ROUTER
+--     produced by : sp_snow_step_TRS_REL1_S30_ROUTER
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL1_S30_ROUTER.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 70 sp_snow_pub_TRS_REL1_EXC_STG_BAD_REC_MEMB_MAIN_ALT_ID; wf_TRS_Stage_Load_1_Ongoing step 80 sp_snow_pub_TRS_REL1_EXC_STG_BAD_REC_MEMB_REF_ALT_ID; wf_TRS_Stage_Load_1_Ongoing step 90 sp_snow_pub_TRS_REL1_EXC_STG_BAD_REC_MEMB_LOOKUP; wf_TRS_Stage_Load_1_Ongoing step 100 sp_snow_pub_TRS_REL1_EXC_STG_BAD_REC_MEMB_DATES
+--   WRK table: WRK_TRS_REL1_S4_CONSOL
+--     produced by : sp_snow_step_TRS_REL1_S40_CONSOL
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL1_S40_CONSOL.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_step_TRS_REL1_S50_PREP
+--   WRK table: WRK_TRS_REL1_S5_PREP
+--     produced by : sp_snow_step_TRS_REL1_S50_PREP
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL1_S50_PREP.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_step_TRS_REL1_S60_TIMELINE
+--   WRK table: WRK_TRS_REL1_S6_TIMELINE
+--     produced by : sp_snow_step_TRS_REL1_S60_TIMELINE
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL1_S60_TIMELINE.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_1_Mem_To_Mem
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 110 sp_snow_pub_TRS_REL1_C_S_TRS_PTY_RLE_REL
+--   Mapping: m_Tgt_C_S_TRS_Pty_Rle_Rel_DeActivation_1 (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_DeActivation_1)
+--   WRK table: WRK_TRS_RELDEACT_S10_MINPK
+--     produced by : sp_snow_step_TRS_RELDEACT_S10_MINPK
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_RELDEACT_S10_MINPK.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_DeActivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_RELDEACT_S20_SRC
+--   WRK table: WRK_TRS_RELDEACT_S20_SRC
+--     produced by : sp_snow_step_TRS_RELDEACT_S20_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_RELDEACT_S20_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_DeActivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_RELDEACT_S30_KEYED
+--   WRK table: WRK_TRS_RELDEACT_S30_KEYED
+--     produced by : sp_snow_step_TRS_RELDEACT_S30_KEYED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_RELDEACT_S30_KEYED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_DeActivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_step_TRS_RELDEACT_S50_READY
+--   WRK table: WRK_TRS_RELDEACT_S40_XREF
+--     produced by : sp_snow_step_TRS_RELDEACT_S40_XREF
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_RELDEACT_S40_XREF.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_DeActivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_step_TRS_RELDEACT_S50_READY
+--   WRK table: WRK_TRS_RELDEACT_S50_READY
+--     produced by : sp_snow_step_TRS_RELDEACT_S50_READY
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_RELDEACT_S50_READY.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_DeActivation_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_pub_TRS_RELDEACT_STG_TRS_DEACTIVATED_RELATIONSHIPS
+--   Mapping: m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP)
+--   WRK table: WRK_TRS_REL2_S1_SRC
+--     produced by : sp_snow_step_TRS_REL2_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL2_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_REL2_S20_KEYED
+--   WRK table: WRK_TRS_REL2_S2_KEYED
+--     produced by : sp_snow_step_TRS_REL2_S20_KEYED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL2_S20_KEYED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_REL2_S30_ROUTER; wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_REL2_S40_CONSOL
+--   WRK table: WRK_TRS_REL2_S3_ROUTER
+--     produced by : sp_snow_step_TRS_REL2_S30_ROUTER
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL2_S30_ROUTER.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 70 sp_snow_pub_TRS_REL2_EXC_STG_BAD_REC_MEMB_DATES; wf_TRS_Stage_Load_1_Ongoing step 80 sp_snow_pub_TRS_REL2_EXC_STG_BAD_REC_MEMB_DEFAULT
+--   WRK table: WRK_TRS_REL2_S4_CONSOL
+--     produced by : sp_snow_step_TRS_REL2_S40_CONSOL
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL2_S40_CONSOL.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_step_TRS_REL2_S50_PREP
+--   WRK table: WRK_TRS_REL2_S5_PREP
+--     produced by : sp_snow_step_TRS_REL2_S50_PREP
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL2_S50_PREP.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_step_TRS_REL2_S60_TIMELINE
+--   WRK table: WRK_TRS_REL2_S6_TIMELINE
+--     produced by : sp_snow_step_TRS_REL2_S60_TIMELINE
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_REL2_S60_TIMELINE.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Rel_2_Mem_To_PCP
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 90 sp_snow_pub_TRS_REL2_C_S_TRS_PTY_RLE_REL_PROV
+--   Mapping: m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr)
+--   WRK table: WRK_TRS_PHN_S1_SRC
+--     produced by : sp_snow_step_TRS_PHN_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PHN_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_PHN_S20_SLOTS; wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_step_TRS_PHN_S60_EMAILS
+--   WRK table: WRK_TRS_PHN_S2_SLOTS
+--     produced by : sp_snow_step_TRS_PHN_S20_SLOTS
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PHN_S20_SLOTS.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_PHN_S30_CHECKED
+--   WRK table: WRK_TRS_PHN_S3_CHECKED
+--     produced by : sp_snow_step_TRS_PHN_S30_CHECKED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PHN_S30_CHECKED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_PHN_S40_PHONES
+--   WRK table: WRK_TRS_PHN_S4_PHONES
+--     produced by : sp_snow_step_TRS_PHN_S40_PHONES
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PHN_S40_PHONES.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_step_TRS_PHN_S50_VERSIONS; wf_TRS_Stage_Load_1_Ongoing step 90 sp_snow_pub_TRS_PHN_EXC_STG_BAD_REC_MEMB_PHONE
+--   WRK table: WRK_TRS_PHN_S5_VERSIONS
+--     produced by : sp_snow_step_TRS_PHN_S50_VERSIONS
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PHN_S50_VERSIONS.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 80 sp_snow_pub_TRS_PHN_C_S_TRS_PTY_RLE_PHN
+--   WRK table: WRK_TRS_PHN_S6_EMAILS
+--     produced by : sp_snow_step_TRS_PHN_S60_EMAILS
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PHN_S60_EMAILS.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 70 sp_snow_step_TRS_PHN_S70_EADDR; wf_TRS_Stage_Load_1_Ongoing step 110 sp_snow_pub_TRS_PHN_EXC_STG_BAD_REC_MEMB_EMAIL
+--   WRK table: WRK_TRS_PHN_S7_VERSIONS
+--     produced by : sp_snow_step_TRS_PHN_S70_EADDR
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PHN_S70_EADDR.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 100 sp_snow_pub_TRS_PHN_C_S_TRS_PTY_RLE_EADDR
+--   Mapping: m_Tgt_C_S_TRS_Pty_Mng_Attr_Sw (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Sw)
+--   WRK table: WRK_TRS_MNGSW_S10_DAILY
+--     produced by : sp_snow_step_TRS_MNGSW_S10_DAILY
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_MNGSW_S10_DAILY.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Sw
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_MNGSW_S20_SRC
+--   WRK table: WRK_TRS_MNGSW_S20_SRC
+--     produced by : sp_snow_step_TRS_MNGSW_S20_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_MNGSW_S20_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Sw
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_MNGSW_S30_NORM
+--   WRK table: WRK_TRS_MNGSW_S30_NORM
+--     produced by : sp_snow_step_TRS_MNGSW_S30_NORM
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_MNGSW_S30_NORM.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Sw
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_MNGSW_S40_ATTRS
+--   WRK table: WRK_TRS_MNGSW_S40_ATTRS
+--     produced by : sp_snow_step_TRS_MNGSW_S40_ATTRS
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_MNGSW_S40_ATTRS.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Sw
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_MNGSW_C_S_TRS_PTY_MNG_ATTR
+--   Mapping: m_Tgt_C_S_TRS_Pty_Mng_Attr_Auth_Rep_Ongoing (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Auth_Rep_Ongoing)
+--   WRK table: WRK_TRS_MNGAR_S10_PAYEE
+--     produced by : sp_snow_step_TRS_AUTHREP_S10_PAYEE
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_AUTHREP_S10_PAYEE.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Auth_Rep_Ongoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_AUTHREP_S20_SRC
+--   WRK table: WRK_TRS_MNGAR_S20_SRC
+--     produced by : sp_snow_step_TRS_AUTHREP_S20_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_AUTHREP_S20_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Auth_Rep_Ongoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_AUTHREP_S30_KEYED
+--   WRK table: WRK_TRS_MNGAR_S30_KEYED
+--     produced by : sp_snow_step_TRS_AUTHREP_S30_KEYED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_AUTHREP_S30_KEYED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Auth_Rep_Ongoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_AUTHREP_S40_AGG
+--   WRK table: WRK_TRS_MNGAR_S40_AGG
+--     produced by : sp_snow_step_TRS_AUTHREP_S40_AGG
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_AUTHREP_S40_AGG.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Mng_Attr_Auth_Rep_Ongoing
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_AUTHREP_C_S_TRS_PTY_MNG_ATTR
+--   Mapping: m_Tgt_C_S_TRS_Pty_Nm (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Nm)
+--   WRK table: WRK_TRS_NM_S10_SRC
+--     produced by : sp_snow_step_TRS_NM_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_NM_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Nm
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_NM_S20_NAMED
+--   WRK table: WRK_TRS_NM_S20_NAMED
+--     produced by : sp_snow_step_TRS_NM_S20_NAMED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_NM_S20_NAMED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Nm
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_NM_S30_STD
+--   WRK table: WRK_TRS_NM_S30_STD
+--     produced by : sp_snow_step_TRS_NM_S30_STD
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_NM_S30_STD.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Nm
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_NM_S40_DEDUP
+--   WRK table: WRK_TRS_NM_S40_DEDUP
+--     produced by : sp_snow_step_TRS_NM_S40_DEDUP
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_NM_S40_DEDUP.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Nm
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_NM_C_S_TRS_PTY_NM
+--   Mapping: m_Tgt_C_S_TRS_Pty_Rle_Alt_Id (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Alt_Id)
+--   WRK table: WRK_TRS_ALT_S1_SRC
+--     produced by : sp_snow_step_TRS_ALT_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ALT_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Alt_Id
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_ALT_S20_SSN
+--   WRK table: WRK_TRS_ALT_S2_SSN
+--     produced by : sp_snow_step_TRS_ALT_S20_SSN
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ALT_S20_SSN.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Alt_Id
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_ALT_S30_NORM
+--   WRK table: WRK_TRS_ALT_S3_NORM
+--     produced by : sp_snow_step_TRS_ALT_S30_NORM
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ALT_S30_NORM.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Alt_Id
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_ALT_S40_ROUTED
+--   WRK table: WRK_TRS_ALT_S4_ROUTED
+--     produced by : sp_snow_step_TRS_ALT_S40_ROUTED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ALT_S40_ROUTED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Alt_Id
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_ALT_C_S_TRS_PTY_RLE_ALT_ID; wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_pub_TRS_ALT_EXC_STG_BAD_REC_MEMB
+--   Mapping: m_Tgt_C_S_TRS_Pty_Rle_Pln (driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Pln)
+--   WRK table: WRK_TRS_PLN_S10_SRC
+--     produced by : sp_snow_step_TRS_PLN_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PLN_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Pln
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_PLN_S20_PLANNED
+--   WRK table: WRK_TRS_PLN_S20_PLANNED
+--     produced by : sp_snow_step_TRS_PLN_S20_PLANNED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PLN_S20_PLANNED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Pln
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_PLN_S30_RANKED
+--   WRK table: WRK_TRS_PLN_S30_RANKED
+--     produced by : sp_snow_step_TRS_PLN_S30_RANKED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_PLN_S30_RANKED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Pty_Rle_Pln
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_pub_TRS_PLN_C_S_TRS_PTY_RLE_PLN; wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_PLN_EXC_STG_BAD_REC_MEMB
+--   Mapping: m_Tgt_C_S_TRS_Addr_1 (driver sp_snow_main_m_Tgt_C_S_TRS_Addr_1)
+--   WRK table: WRK_TRS_ADDR1_S10_SRC
+--     produced by : sp_snow_step_TRS_ADDR1_S10_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR1_S10_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_ADDR1_S20_DERIVED
+--   WRK table: WRK_TRS_ADDR1_S20_DERIVED
+--     produced by : sp_snow_step_TRS_ADDR1_S20_DERIVED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR1_S20_DERIVED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_ADDR1_S30_VALIDATED
+--   WRK table: WRK_TRS_ADDR1_S30_VALIDATED
+--     produced by : sp_snow_step_TRS_ADDR1_S30_VALIDATED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR1_S30_VALIDATED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_ADDR1_S40_READY
+--   WRK table: WRK_TRS_ADDR1_S40_READY
+--     produced by : sp_snow_step_TRS_ADDR1_S40_READY
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR1_S40_READY.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_1
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_pub_TRS_ADDR1_STG_TRS_D_UNQ_ADDR
+--   Mapping: m_Tgt_C_S_TRS_Addr_2 (driver sp_snow_main_m_Tgt_C_S_TRS_Addr_2)
+--   WRK table: WRK_TRS_ADDR2_S10_DEDUP
+--     produced by : sp_snow_step_TRS_ADDR2_S10_DEDUP
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR2_S10_DEDUP.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_2
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 20 sp_snow_step_TRS_ADDR2_S20_SRC
+--   WRK table: WRK_TRS_ADDR2_S20_SRC
+--     produced by : sp_snow_step_TRS_ADDR2_S20_SRC
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR2_S20_SRC.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_2
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 30 sp_snow_step_TRS_ADDR2_S30_KEYED
+--   WRK table: WRK_TRS_ADDR2_S30_KEYED
+--     produced by : sp_snow_step_TRS_ADDR2_S30_KEYED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR2_S30_KEYED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_2
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 40 sp_snow_step_TRS_ADDR2_S40_SCORED
+--   WRK table: WRK_TRS_ADDR2_S40_SCORED
+--     produced by : sp_snow_step_TRS_ADDR2_S40_SCORED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR2_S40_SCORED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_2
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 50 sp_snow_step_TRS_ADDR2_S50_READY
+--   WRK table: WRK_TRS_ADDR2_S50_READY
+--     produced by : sp_snow_step_TRS_ADDR2_S50_READY
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_ADDR2_S50_READY.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Addr_2
+--     consumed by : wf_TRS_Stage_Load_1_Ongoing step 60 sp_snow_pub_TRS_ADDR2_DQM_ADDRESS; wf_TRS_Stage_Load_1_Ongoing step 70 sp_snow_pub_TRS_ADDR2_C_S_TRS_PTY_RLE_ADDR; wf_TRS_Stage_Load_1_Ongoing step 80 sp_snow_pub_TRS_ADDR2_EXC_STG_BAD_REC_MEMB
+
+-- ----------------------------------------------------------------------------
+-- Workflow: wf_TRS_Stage_Load_TOA (2 WRK tables)
+-- ----------------------------------------------------------------------------
+--   Mapping: m_Tgt_C_S_TRS_Stg_TOA (driver sp_snow_main_m_Tgt_C_S_TRS_Stg_TOA)
+--   WRK table: WRK_TRS_LUTOA_S10_KEYED
+--     produced by : sp_snow_step_TRS_STGTOA_S10_KEYED
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_STGTOA_S10_KEYED.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Stg_TOA
+--     consumed by : wf_TRS_Stage_Load_TOA step 20 sp_snow_step_TRS_STGTOA_S20_FINAL
+--   WRK table: WRK_TRS_LUTOA_S20_FINAL
+--     produced by : sp_snow_step_TRS_STGTOA_S20_FINAL
+--     CTAS in     : TRS/steps/sp_snow_step_TRS_STGTOA_S20_FINAL.sql line 55
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TRS_Stg_TOA
+--     consumed by : wf_TRS_Stage_Load_TOA step 30 sp_snow_pub_TRS_STGTOA_C_S_LU_TOA
+
+-- ----------------------------------------------------------------------------
+-- Workflow: wf_ECI_Stage_Load (32 WRK tables)
+-- ----------------------------------------------------------------------------
+--   Mapping: m_Tgt_C_S_ECI_Pty_Validation (driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Validation)
+--   WRK table: WRK_ECI_VAL_S10_SRC
+--     produced by : sp_snow_step_ECI_VAL_S10_SRC
+--     CTAS in     : ECI/VAL/steps/sp_snow_step_ECI_VAL_S10_SRC.sql line 65
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Validation
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_VAL_S20_ENRICHED
+--   WRK table: WRK_ECI_VAL_S20_ENRICHED
+--     produced by : sp_snow_step_ECI_VAL_S20_ENRICHED
+--     CTAS in     : ECI/VAL/steps/sp_snow_step_ECI_VAL_S20_ENRICHED.sql line 68
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Validation
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_step_ECI_VAL_S30_ROUTED
+--   WRK table: WRK_ECI_VAL_S30_ROUTED
+--     produced by : sp_snow_step_ECI_VAL_S30_ROUTED
+--     CTAS in     : ECI/VAL/steps/sp_snow_step_ECI_VAL_S30_ROUTED.sql line 70
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Validation
+--     consumed by : wf_ECI_Stage_Load step 40 sp_snow_pub_ECI_VAL_EXC_STG_BAD_REC_MEMB; wf_ECI_Stage_Load step 50 sp_snow_pub_ECI_VAL_STG_ECI_PTY_INACTIVE_LOG_DEACTIVATION; wf_ECI_Stage_Load step 60 sp_snow_pub_ECI_VAL_STG_ECI_PTY_INACTIVE_STS; wf_ECI_Stage_Load step 70 sp_snow_pub_ECI_VAL_STG_ECI_PTY_INACTIVE_LOG_REACTIVATION
+--   Mapping: m_Tgt_C_S_ECI_Pty (driver sp_snow_main_m_Tgt_C_S_ECI_Pty)
+--   WRK table: WRK_ECI_PTY_S10_SRC
+--     produced by : sp_snow_step_ECI_PTY_S10_SRC
+--     CTAS in     : ECI/PTY/steps/sp_snow_step_ECI_PTY_S10_SRC.sql line 64
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_PTY_S20_ACTIVE
+--   WRK table: WRK_ECI_PTY_S20_ACTIVE
+--     produced by : sp_snow_step_ECI_PTY_S20_ACTIVE
+--     CTAS in     : ECI/PTY/steps/sp_snow_step_ECI_PTY_S20_ACTIVE.sql line 63
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_step_ECI_PTY_S30_DQ
+--   WRK table: WRK_ECI_PTY_S30_DQ
+--     produced by : sp_snow_step_ECI_PTY_S30_DQ
+--     CTAS in     : ECI/PTY/steps/sp_snow_step_ECI_PTY_S30_DQ.sql line 60
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty
+--     consumed by : wf_ECI_Stage_Load step 40 sp_snow_step_ECI_PTY_S40_DQ2
+--   WRK table: WRK_ECI_PTY_S40_DQ2
+--     produced by : sp_snow_step_ECI_PTY_S40_DQ2
+--     CTAS in     : ECI/PTY/steps/sp_snow_step_ECI_PTY_S40_DQ2.sql line 61
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty
+--     consumed by : wf_ECI_Stage_Load step 50 sp_snow_step_ECI_PTY_S50_READY
+--   WRK table: WRK_ECI_PTY_S50_READY
+--     produced by : sp_snow_step_ECI_PTY_S50_READY
+--     CTAS in     : ECI/PTY/steps/sp_snow_step_ECI_PTY_S50_READY.sql line 71
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty
+--     consumed by : wf_ECI_Stage_Load step 60 sp_snow_pub_ECI_PTY_C_S_ECI_PTY; wf_ECI_Stage_Load step 70 sp_snow_pub_ECI_PTY_C_S_ECI_PTY_RLE; wf_ECI_Stage_Load step 80 sp_snow_pub_ECI_PTY_EXC_STG_BAD_REC_MEMB_GENDER; wf_ECI_Stage_Load step 90 sp_snow_pub_ECI_PTY_EXC_STG_BAD_REC_MEMB_BIRTH; wf_ECI_Stage_Load step 100 sp_snow_pub_ECI_PTY_EXC_STG_BAD_REC_MEMB_ETHNICITY; wf_ECI_Stage_Load step 110 sp_snow_pub_ECI_PTY_EXC_STG_BAD_REC_MEMB_RACE; wf_ECI_Stage_Load step 120 sp_snow_pub_ECI_PTY_EXC_STG_BAD_REC_MEMB_LANGUAGE
+--   Mapping: m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Addr (driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Addr)
+--   WRK table: WRK_ECI_RFA_S10_LATEST
+--     produced by : sp_snow_step_ECI_RFA_S10_LATEST
+--     CTAS in     : ECI/RFA/steps/sp_snow_step_ECI_RFA_S10_LATEST.sql line 68
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Addr
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_RFA_S20_KEEPNEW
+--   WRK table: WRK_ECI_RFA_S20_KEEPNEW
+--     produced by : sp_snow_step_ECI_RFA_S20_KEEPNEW
+--     CTAS in     : ECI/RFA/steps/sp_snow_step_ECI_RFA_S20_KEEPNEW.sql line 71
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Addr
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_pub_ECI_RFA_STG_ECI_D_FAMILY_ADDRESS
+--   Mapping: m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Phn (driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Phn)
+--   WRK table: WRK_ECI_RFP_S10_LATEST
+--     produced by : sp_snow_step_ECI_RFP_S10_LATEST
+--     CTAS in     : ECI/RFP/steps/sp_snow_step_ECI_RFP_S10_LATEST.sql line 81
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Phn
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_RFP_S20_KEEPNEW
+--   WRK table: WRK_ECI_RFP_S20_KEEPNEW
+--     produced by : sp_snow_step_ECI_RFP_S20_KEEPNEW
+--     CTAS in     : ECI/RFP/steps/sp_snow_step_ECI_RFP_S20_KEEPNEW.sql line 91
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Family_Phn
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_pub_ECI_RFP_STG_ECI_D_FAMILY_PHONE
+--   Mapping: m_Tgt_Stg_ECI_Pty_Reactivation_D_Medicaid (driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Medicaid)
+--   WRK table: WRK_ECI_RFM_S10_LATEST
+--     produced by : sp_snow_step_ECI_RFM_S10_LATEST
+--     CTAS in     : ECI/RFM/steps/sp_snow_step_ECI_RFM_S10_LATEST.sql line 76
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Medicaid
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_RFM_S20_KEEPNEW
+--   WRK table: WRK_ECI_RFM_S20_KEEPNEW
+--     produced by : sp_snow_step_ECI_RFM_S20_KEEPNEW
+--     CTAS in     : ECI/RFM/steps/sp_snow_step_ECI_RFM_S20_KEEPNEW.sql line 86
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_Stg_ECI_Pty_Reactivation_D_Medicaid
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_pub_ECI_RFM_STG_ECI_D_MEDICAID
+--   Mapping: m_Tgt_C_S_ECI_Pty_Rle_Alt_Id (driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Alt_Id)
+--   WRK table: WRK_ECI_ALT_S10_SRC
+--     produced by : sp_snow_step_ECI_ALT_S10_SRC
+--     CTAS in     : ECI/ALT/steps/sp_snow_step_ECI_ALT_S10_SRC.sql line 77
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Alt_Id
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_ALT_S20_ACTIVE
+--   WRK table: WRK_ECI_ALT_S20_ACTIVE
+--     produced by : sp_snow_step_ECI_ALT_S20_ACTIVE
+--     CTAS in     : ECI/ALT/steps/sp_snow_step_ECI_ALT_S20_ACTIVE.sql line 77
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Alt_Id
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_step_ECI_ALT_S30_ROUTED
+--   WRK table: WRK_ECI_ALT_S30_ROUTED
+--     produced by : sp_snow_step_ECI_ALT_S30_ROUTED
+--     CTAS in     : ECI/ALT/steps/sp_snow_step_ECI_ALT_S30_ROUTED.sql line 78
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Alt_Id
+--     consumed by : wf_ECI_Stage_Load step 40 sp_snow_step_ECI_ALT_S40_READY
+--   WRK table: WRK_ECI_ALT_S40_READY
+--     produced by : sp_snow_step_ECI_ALT_S40_READY
+--     CTAS in     : ECI/ALT/steps/sp_snow_step_ECI_ALT_S40_READY.sql line 82
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Alt_Id
+--     consumed by : wf_ECI_Stage_Load step 50 sp_snow_pub_ECI_ALT_C_S_ECI_PTY_RLE_ALT_ID; wf_ECI_Stage_Load step 60 sp_snow_pub_ECI_ALT_EXC_STG_BAD_REC_MEMB_SSN; wf_ECI_Stage_Load step 70 sp_snow_pub_ECI_ALT_EXC_STG_BAD_REC_MEMB_MEDICAID
+--   Mapping: m_Tgt_C_S_ECI_Pty_Rle_Phn_And_EAddr (driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Phn_And_EAddr)
+--   WRK table: WRK_ECI_PHN_S10_SRC
+--     produced by : sp_snow_step_ECI_PHN_S10_SRC
+--     CTAS in     : ECI/PHN/steps/sp_snow_step_ECI_PHN_S10_SRC.sql line 77
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_PHN_S20_ACTIVE
+--   WRK table: WRK_ECI_PHN_S20_ACTIVE
+--     produced by : sp_snow_step_ECI_PHN_S20_ACTIVE
+--     CTAS in     : ECI/PHN/steps/sp_snow_step_ECI_PHN_S20_ACTIVE.sql line 77
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_step_ECI_PHN_S30_DQ
+--   WRK table: WRK_ECI_PHN_S30_DQ
+--     produced by : sp_snow_step_ECI_PHN_S30_DQ
+--     CTAS in     : ECI/PHN/steps/sp_snow_step_ECI_PHN_S30_DQ.sql line 77
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_ECI_Stage_Load step 40 sp_snow_step_ECI_PHN_S40_ROUTED
+--   WRK table: WRK_ECI_PHN_S40_ROUTED
+--     produced by : sp_snow_step_ECI_PHN_S40_ROUTED
+--     CTAS in     : ECI/PHN/steps/sp_snow_step_ECI_PHN_S40_ROUTED.sql line 77
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_ECI_Stage_Load step 50 sp_snow_step_ECI_PHN_S50_READY
+--   WRK table: WRK_ECI_PHN_S50_READY
+--     produced by : sp_snow_step_ECI_PHN_S50_READY
+--     CTAS in     : ECI/PHN/steps/sp_snow_step_ECI_PHN_S50_READY.sql line 78
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_ECI_Stage_Load step 60 sp_snow_pub_ECI_PHN_C_S_ECI_PTY_RLE_PHN; wf_ECI_Stage_Load step 70 sp_snow_pub_ECI_PHN_EXC_STG_BAD_REC_MEMB_PHONE; wf_ECI_Stage_Load step 80 sp_snow_pub_ECI_PHN_C_S_ECI_PTY_RLE_EADDR; wf_ECI_Stage_Load step 90 sp_snow_pub_ECI_PHN_EXC_STG_BAD_REC_MEMB_EMAIL
+--   Mapping: m_Tgt_C_S_ECI_Pty_Addr (driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Addr)
+--   WRK table: WRK_ECI_ADR_S10_SRC
+--     produced by : sp_snow_step_ECI_ADR_S10_SRC
+--     CTAS in     : ECI/ADR/steps/sp_snow_step_ECI_ADR_S10_SRC.sql line 67
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Addr
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_ADR_S20_KEYED
+--   WRK table: WRK_ECI_ADR_S20_KEYED
+--     produced by : sp_snow_step_ECI_ADR_S20_KEYED
+--     CTAS in     : ECI/ADR/steps/sp_snow_step_ECI_ADR_S20_KEYED.sql line 67
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Addr
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_step_ECI_ADR_S30_VALIDATED
+--   WRK table: WRK_ECI_ADR_S30_VALIDATED
+--     produced by : sp_snow_step_ECI_ADR_S30_VALIDATED
+--     CTAS in     : ECI/ADR/steps/sp_snow_step_ECI_ADR_S30_VALIDATED.sql line 67
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Addr
+--     consumed by : wf_ECI_Stage_Load step 40 sp_snow_step_ECI_ADR_S40_FLAT
+--   WRK table: WRK_ECI_ADR_S40_FLAT
+--     produced by : sp_snow_step_ECI_ADR_S40_FLAT
+--     CTAS in     : ECI/ADR/steps/sp_snow_step_ECI_ADR_S40_FLAT.sql line 67
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Addr
+--     consumed by : wf_ECI_Stage_Load step 50 sp_snow_step_ECI_ADR_S50_READY
+--   WRK table: WRK_ECI_ADR_S50_READY
+--     produced by : sp_snow_step_ECI_ADR_S50_READY
+--     CTAS in     : ECI/ADR/steps/sp_snow_step_ECI_ADR_S50_READY.sql line 70
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Addr
+--     consumed by : wf_ECI_Stage_Load step 60 sp_snow_pub_ECI_ADR_DQM_ADDRESS; wf_ECI_Stage_Load step 70 sp_snow_pub_ECI_ADR_C_S_ECI_PTY_RLE_ADDR; wf_ECI_Stage_Load step 80 sp_snow_pub_ECI_ADR_EXC_STG_BAD_REC_MEMB
+--   Mapping: m_Tgt_C_S_ECI_Pty_Rle_Rel (driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Rel)
+--   WRK table: WRK_ECI_REL_S10_SRC
+--     produced by : sp_snow_step_ECI_REL_S10_SRC
+--     CTAS in     : ECI/REL/steps/sp_snow_step_ECI_REL_S10_SRC.sql line 73
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Rel
+--     consumed by : wf_ECI_Stage_Load step 20 sp_snow_step_ECI_REL_S20_KEYED
+--   WRK table: WRK_ECI_REL_S20_KEYED
+--     produced by : sp_snow_step_ECI_REL_S20_KEYED
+--     CTAS in     : ECI/REL/steps/sp_snow_step_ECI_REL_S20_KEYED.sql line 72
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Rel
+--     consumed by : wf_ECI_Stage_Load step 30 sp_snow_step_ECI_REL_S30_TYPED
+--   WRK table: WRK_ECI_REL_S30_TYPED
+--     produced by : sp_snow_step_ECI_REL_S30_TYPED
+--     CTAS in     : ECI/REL/steps/sp_snow_step_ECI_REL_S30_TYPED.sql line 76
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Rel
+--     consumed by : wf_ECI_Stage_Load step 40 sp_snow_step_ECI_REL_S40_READY
+--   WRK table: WRK_ECI_REL_S40_READY
+--     produced by : sp_snow_step_ECI_REL_S40_READY
+--     CTAS in     : ECI/REL/steps/sp_snow_step_ECI_REL_S40_READY.sql line 81
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_ECI_Pty_Rle_Rel
+--     consumed by : wf_ECI_Stage_Load step 50 sp_snow_pub_ECI_REL_C_S_ECI_PTY_RLE_REL; wf_ECI_Stage_Load step 60 sp_snow_pub_ECI_REL_EXC_STG_BAD_REC_MEMB
+
+-- ----------------------------------------------------------------------------
+-- Workflow: wf_FSS_Stage_Load (21 WRK tables)
+-- ----------------------------------------------------------------------------
+--   Mapping: m_Tgt_C_S_FSS_Pty_Validation (driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Validation)
+--   WRK table: WRK_FSS_VAL_S1_SRC
+--     produced by : sp_snow_step_FSS_VAL_S10_SRC
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_VAL_S10_SRC.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Validation
+--     consumed by : wf_FSS_Stage_Load step 20 sp_snow_step_FSS_VAL_S20_ENRICHED
+--   WRK table: WRK_FSS_VAL_S2_ENRICHED
+--     produced by : sp_snow_step_FSS_VAL_S20_ENRICHED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_VAL_S20_ENRICHED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Validation
+--     consumed by : wf_FSS_Stage_Load step 30 sp_snow_step_FSS_VAL_S30_ROUTED
+--   WRK table: WRK_FSS_VAL_S3_ROUTED
+--     produced by : sp_snow_step_FSS_VAL_S30_ROUTED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_VAL_S30_ROUTED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Validation
+--     consumed by : wf_FSS_Stage_Load step 50 sp_snow_pub_FSS_VAL_EXC_STG_BAD_REC_MEMB; wf_FSS_Stage_Load step 60 sp_snow_pub_FSS_VAL_STG_FSS_PTY_INACTIVE_LOG; wf_FSS_Stage_Load step 70 sp_snow_pub_FSS_VAL_STG_FSS_PTY_INACTIVE_STS_NEW; wf_FSS_Stage_Load step 80 sp_snow_pub_FSS_VAL_STG_FSS_PTY_INACTIVE_STS_REACTIVATION
+--   Mapping: m_Tgt_C_S_FSS_Pty (driver sp_snow_main_m_Tgt_C_S_FSS_Pty)
+--   WRK table: WRK_FSS_PTY_S1_SRC
+--     produced by : sp_snow_step_FSS_PTY_S10_SRC
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PTY_S10_SRC.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty
+--     consumed by : wf_FSS_Stage_Load step 20 sp_snow_step_FSS_PTY_S20_DQ
+--   WRK table: WRK_FSS_PTY_S2_DQ
+--     produced by : sp_snow_step_FSS_PTY_S20_DQ
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PTY_S20_DQ.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty
+--     consumed by : wf_FSS_Stage_Load step 30 sp_snow_step_FSS_PTY_S30_DQ2
+--   WRK table: WRK_FSS_PTY_S3_DQ2
+--     produced by : sp_snow_step_FSS_PTY_S30_DQ2
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PTY_S30_DQ2.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty
+--     consumed by : wf_FSS_Stage_Load step 40 sp_snow_step_FSS_PTY_S40_ROUTED
+--   WRK table: WRK_FSS_PTY_S4_ROUTED
+--     produced by : sp_snow_step_FSS_PTY_S40_ROUTED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PTY_S40_ROUTED.sql line 60
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty
+--     consumed by : wf_FSS_Stage_Load step 50 sp_snow_pub_FSS_PTY_C_S_FSS_PTY; wf_FSS_Stage_Load step 60 sp_snow_pub_FSS_PTY_C_S_FSS_PTY_RLE; wf_FSS_Stage_Load step 70 sp_snow_pub_FSS_PTY_EXC_STG_BAD_REC_MEMB_GENDER; wf_FSS_Stage_Load step 80 sp_snow_pub_FSS_PTY_EXC_STG_BAD_REC_MEMB_BIRTH; wf_FSS_Stage_Load step 90 sp_snow_pub_FSS_PTY_EXC_STG_BAD_REC_MEMB_ETHNICITY; wf_FSS_Stage_Load step 100 sp_snow_pub_FSS_PTY_EXC_STG_BAD_REC_MEMB_RACE; wf_FSS_Stage_Load step 110 sp_snow_pub_FSS_PTY_EXC_STG_BAD_REC_MEMB_LANGUAGE; wf_FSS_Stage_Load step 120 sp_snow_pub_FSS_PTY_EXC_STG_BAD_REC_MEMB_SUFFIX
+--   Mapping: m_Tgt_C_S_FSS_Pty_Addr (driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Addr)
+--   WRK table: WRK_FSS_ADDR_S1_SRC
+--     produced by : sp_snow_step_FSS_ADR_S10_SRC
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_ADR_S10_SRC.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Addr
+--     consumed by : wf_FSS_Stage_Load step 20 sp_snow_step_FSS_ADR_S20_VALIDATED
+--   WRK table: WRK_FSS_ADDR_S2_VALIDATED
+--     produced by : sp_snow_step_FSS_ADR_S20_VALIDATED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_ADR_S20_VALIDATED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Addr
+--     consumed by : wf_FSS_Stage_Load step 30 sp_snow_step_FSS_ADR_S30_FLAT
+--   WRK table: WRK_FSS_ADDR_S3_FLAT
+--     produced by : sp_snow_step_FSS_ADR_S30_FLAT
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_ADR_S30_FLAT.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Addr
+--     consumed by : wf_FSS_Stage_Load step 40 sp_snow_step_FSS_ADR_S40_SCORED
+--   WRK table: WRK_FSS_ADDR_S4_SCORED
+--     produced by : sp_snow_step_FSS_ADR_S40_SCORED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_ADR_S40_SCORED.sql line 60
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Addr
+--     consumed by : wf_FSS_Stage_Load step 50 sp_snow_pub_FSS_ADR_DQM_ADDRESS; wf_FSS_Stage_Load step 60 sp_snow_pub_FSS_ADR_C_S_FSS_PTY_RLE_ADDR; wf_FSS_Stage_Load step 70 sp_snow_pub_FSS_ADR_EXC_STG_BAD_REC_MEMB
+--   Mapping: m_Tgt_C_S_FSS_Pty_Rle_Alt_Id (driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Alt_Id)
+--   WRK table: WRK_FSS_ALT_S1_SRC
+--     produced by : sp_snow_step_FSS_ALT_S10_SRC
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_ALT_S10_SRC.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Alt_Id
+--     consumed by : wf_FSS_Stage_Load step 20 sp_snow_step_FSS_ALT_S20_FILTERED
+--   WRK table: WRK_FSS_ALT_S2_FILTERED
+--     produced by : sp_snow_step_FSS_ALT_S20_FILTERED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_ALT_S20_FILTERED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Alt_Id
+--     consumed by : wf_FSS_Stage_Load step 50 sp_snow_pub_FSS_ALT_C_S_FSS_PTY_RLE_ALT_ID
+--   Mapping: m_Tgt_C_S_FSS_Pty_Rle_Phn_And_EAddr (driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Phn_And_EAddr)
+--   WRK table: WRK_FSS_PHN_S1_SRC
+--     produced by : sp_snow_step_FSS_PHN_S10_SRC
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PHN_S10_SRC.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_FSS_Stage_Load step 20 sp_snow_step_FSS_PHN_S20_DQ
+--   WRK table: WRK_FSS_PHN_S2_DQ
+--     produced by : sp_snow_step_FSS_PHN_S20_DQ
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PHN_S20_DQ.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_FSS_Stage_Load step 30 sp_snow_step_FSS_PHN_S30_CHECKED
+--   WRK table: WRK_FSS_PHN_S3_CHECKED
+--     produced by : sp_snow_step_FSS_PHN_S30_CHECKED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PHN_S30_CHECKED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_FSS_Stage_Load step 40 sp_snow_step_FSS_PHN_S40_ROUTED
+--   WRK table: WRK_FSS_PHN_S4_ROUTED
+--     produced by : sp_snow_step_FSS_PHN_S40_ROUTED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_PHN_S40_ROUTED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_FSS_Stage_Load step 50 sp_snow_pub_FSS_PHN_C_S_FSS_PTY_RLE_EADDR; wf_FSS_Stage_Load step 60 sp_snow_pub_FSS_PHN_EXC_STG_BAD_REC_MEMB_EMAIL; wf_FSS_Stage_Load step 70 sp_snow_pub_FSS_PHN_C_S_FSS_PTY_RLE_PHN; wf_FSS_Stage_Load step 80 sp_snow_pub_FSS_PHN_EXC_STG_BAD_REC_MEMB_PHONE; wf_FSS_Stage_Load step 90 sp_snow_pub_FSS_PHN_EXC_STG_BAD_REC_MEMB_EXTENSION
+--   Mapping: m_Tgt_C_S_FSS_Pty_Rle_Rel (driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Rel)
+--   WRK table: WRK_FSS_REL_S1_SRC
+--     produced by : sp_snow_step_FSS_REL_S10_SRC
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_REL_S10_SRC.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Rel
+--     consumed by : wf_FSS_Stage_Load step 20 sp_snow_step_FSS_REL_S20_CODED
+--   WRK table: WRK_FSS_REL_S2_CODED
+--     produced by : sp_snow_step_FSS_REL_S20_CODED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_REL_S20_CODED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Rel
+--     consumed by : wf_FSS_Stage_Load step 30 sp_snow_step_FSS_REL_S30_TYPED
+--   WRK table: WRK_FSS_REL_S3_TYPED
+--     produced by : sp_snow_step_FSS_REL_S30_TYPED
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_REL_S30_TYPED.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Rel
+--     consumed by : wf_FSS_Stage_Load step 40 sp_snow_step_FSS_REL_S40_FINAL
+--   WRK table: WRK_FSS_REL_S4_FINAL
+--     produced by : sp_snow_step_FSS_REL_S40_FINAL
+--     CTAS in     : FSS/steps/sp_snow_step_FSS_REL_S40_FINAL.sql line 57
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_FSS_Pty_Rle_Rel
+--     consumed by : wf_FSS_Stage_Load step 50 sp_snow_pub_FSS_REL_C_S_FSS_PTY_RLE_REL; wf_FSS_Stage_Load step 60 sp_snow_pub_FSS_REL_EXC_STG_BAD_REC_MEMB
+
+-- ----------------------------------------------------------------------------
+-- Workflow: wf_WIC_Stage_Load (17 WRK tables)
+-- ----------------------------------------------------------------------------
+--   Mapping: m_Tgt_C_S_WIC_Pty_Validation (driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Validation)
+--   WRK table: WRK_WIC_VAL_S10_ENRICHED
+--     produced by : sp_snow_step_WIC_VAL_S10_ENRICHED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_VAL_S10_ENRICHED.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Validation
+--     consumed by : wf_WIC_Stage_Load step 20 sp_snow_step_WIC_VAL_S20_NAMED
+--   WRK table: WRK_WIC_VAL_S20_NAMED
+--     produced by : sp_snow_step_WIC_VAL_S20_NAMED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_VAL_S20_NAMED.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Validation
+--     consumed by : wf_WIC_Stage_Load step 30 sp_snow_step_WIC_VAL_S30_ROUTED
+--   WRK table: WRK_WIC_VAL_S30_ROUTED
+--     produced by : sp_snow_step_WIC_VAL_S30_ROUTED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_VAL_S30_ROUTED.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Validation
+--     consumed by : wf_WIC_Stage_Load step 40 sp_snow_pub_WIC_VAL_EXC_STG_BAD_REC_MEMB; wf_WIC_Stage_Load step 50 sp_snow_pub_WIC_VAL_STG_WIC_PTY_INACTIVE_LOG_DEACTIVATION; wf_WIC_Stage_Load step 60 sp_snow_pub_WIC_VAL_STG_WIC_PTY_INACTIVE_STS; wf_WIC_Stage_Load step 70 sp_snow_pub_WIC_VAL_STG_WIC_PTY_INACTIVE_LOG_REACTIVATION
+--   Mapping: m_Tgt_C_S_WIC_Pty (driver sp_snow_main_m_Tgt_C_S_WIC_Pty)
+--   WRK table: WRK_WIC_PTY_S10_ACTIVE
+--     produced by : sp_snow_step_WIC_PTY_S10_ACTIVE
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PTY_S10_ACTIVE.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty
+--     consumed by : wf_WIC_Stage_Load step 20 sp_snow_step_WIC_PTY_S20_DQ
+--   WRK table: WRK_WIC_PTY_S20_DQ
+--     produced by : sp_snow_step_WIC_PTY_S20_DQ
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PTY_S20_DQ.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty
+--     consumed by : wf_WIC_Stage_Load step 30 sp_snow_step_WIC_PTY_S30_DQ2
+--   WRK table: WRK_WIC_PTY_S30_DQ2
+--     produced by : sp_snow_step_WIC_PTY_S30_DQ2
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PTY_S30_DQ2.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty
+--     consumed by : wf_WIC_Stage_Load step 40 sp_snow_step_WIC_PTY_S40_ROUTED
+--   WRK table: WRK_WIC_PTY_S40_ROUTED
+--     produced by : sp_snow_step_WIC_PTY_S40_ROUTED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PTY_S40_ROUTED.sql line 51
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty
+--     consumed by : wf_WIC_Stage_Load step 50 sp_snow_pub_WIC_PTY_C_S_WIC_PTY; wf_WIC_Stage_Load step 60 sp_snow_pub_WIC_PTY_C_S_WIC_PTY_RLE; wf_WIC_Stage_Load step 70 sp_snow_pub_WIC_PTY_EXC_STG_BAD_REC_MEMB_GENDER; wf_WIC_Stage_Load step 80 sp_snow_pub_WIC_PTY_EXC_STG_BAD_REC_MEMB_BIRTH; wf_WIC_Stage_Load step 90 sp_snow_pub_WIC_PTY_EXC_STG_BAD_REC_MEMB_ETHNICITY; wf_WIC_Stage_Load step 100 sp_snow_pub_WIC_PTY_EXC_STG_BAD_REC_MEMB_RACE; wf_WIC_Stage_Load step 110 sp_snow_pub_WIC_PTY_EXC_STG_BAD_REC_MEMB_LANGUAGE
+--   Mapping: m_Tgt_C_S_WIC_Pty_Addr (driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Addr)
+--   WRK table: WRK_WIC_ADDR_S10_ACTIVE
+--     produced by : sp_snow_step_WIC_ADR_S10_ACTIVE
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_ADR_S10_ACTIVE.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Addr
+--     consumed by : wf_WIC_Stage_Load step 20 sp_snow_step_WIC_ADR_S20_VALIDATED
+--   WRK table: WRK_WIC_ADDR_S20_VALIDATED
+--     produced by : sp_snow_step_WIC_ADR_S20_VALIDATED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_ADR_S20_VALIDATED.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Addr
+--     consumed by : wf_WIC_Stage_Load step 30 sp_snow_step_WIC_ADR_S30_FLAT
+--   WRK table: WRK_WIC_ADDR_S30_FLAT
+--     produced by : sp_snow_step_WIC_ADR_S30_FLAT
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_ADR_S30_FLAT.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Addr
+--     consumed by : wf_WIC_Stage_Load step 40 sp_snow_step_WIC_ADR_S40_SCORED
+--   WRK table: WRK_WIC_ADDR_S40_SCORED
+--     produced by : sp_snow_step_WIC_ADR_S40_SCORED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_ADR_S40_SCORED.sql line 51
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Addr
+--     consumed by : wf_WIC_Stage_Load step 50 sp_snow_pub_WIC_ADR_DQM_ADDRESS; wf_WIC_Stage_Load step 60 sp_snow_pub_WIC_ADR_C_S_WIC_PTY_RLE_ADDR; wf_WIC_Stage_Load step 70 sp_snow_pub_WIC_ADR_EXC_STG_BAD_REC_MEMB
+--   Mapping: m_Tgt_C_S_WIC_Pty_Rle_Phn_And_EAddr (driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Phn_And_EAddr)
+--   WRK table: WRK_WIC_PHN_S10_SRC
+--     produced by : sp_snow_step_WIC_PHN_S10_SRC
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PHN_S10_SRC.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_WIC_Stage_Load step 20 sp_snow_step_WIC_PHN_S20_CHECKED
+--   WRK table: WRK_WIC_PHN_S20_CHECKED
+--     produced by : sp_snow_step_WIC_PHN_S20_CHECKED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PHN_S20_CHECKED.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_WIC_Stage_Load step 30 sp_snow_step_WIC_PHN_S30_ROUTED
+--   WRK table: WRK_WIC_PHN_S30_ROUTED
+--     produced by : sp_snow_step_WIC_PHN_S30_ROUTED
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PHN_S30_ROUTED.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_WIC_Stage_Load step 40 sp_snow_step_WIC_PHN_S40_READY
+--   WRK table: WRK_WIC_PHN_S40_READY
+--     produced by : sp_snow_step_WIC_PHN_S40_READY
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_PHN_S40_READY.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Phn_And_EAddr
+--     consumed by : wf_WIC_Stage_Load step 50 sp_snow_pub_WIC_PHN_C_S_WIC_PTY_RLE_PHN; wf_WIC_Stage_Load step 60 sp_snow_pub_WIC_PHN_EXC_STG_BAD_REC_MEMB_PHONE; wf_WIC_Stage_Load step 70 sp_snow_pub_WIC_PHN_C_S_WIC_PTY_RLE_EADDR; wf_WIC_Stage_Load step 80 sp_snow_pub_WIC_PHN_EXC_STG_BAD_REC_MEMB_EMAIL
+--   Mapping: m_Tgt_C_S_WIC_Pty_Rle_Alt_Id (driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Alt_Id)
+--   WRK table: WRK_WIC_ALT_S10_KEYS
+--     produced by : sp_snow_step_WIC_ALT_S10_KEYS
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_ALT_S10_KEYS.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Alt_Id
+--     consumed by : wf_WIC_Stage_Load step 20 sp_snow_step_WIC_ALT_S20_READY
+--   WRK table: WRK_WIC_ALT_S20_READY
+--     produced by : sp_snow_step_WIC_ALT_S20_READY
+--     CTAS in     : WIC/steps/sp_snow_step_WIC_ALT_S20_READY.sql line 48
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_WIC_Pty_Rle_Alt_Id
+--     consumed by : wf_WIC_Stage_Load step 30 sp_snow_pub_WIC_ALT_C_S_WIC_PTY_RLE_ALT_ID
+
+-- ----------------------------------------------------------------------------
+-- Workflow: wf_TTF_Stage_Load (12 WRK tables)
+-- ----------------------------------------------------------------------------
+--   Mapping: m_Tgt_C_S_TTF_Pty_Validation (driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Validation)
+--   WRK table: WRK_TTF_VAL_S1_ENRICHED
+--     produced by : sp_snow_step_TTF_VAL_S10_ENRICHED
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_VAL_S10_ENRICHED.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Validation
+--     consumed by : wf_TTF_Stage_Load step 20 sp_snow_step_TTF_VAL_S20_NAMED
+--   WRK table: WRK_TTF_VAL_S2_NAMED
+--     produced by : sp_snow_step_TTF_VAL_S20_NAMED
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_VAL_S20_NAMED.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Validation
+--     consumed by : wf_TTF_Stage_Load step 30 sp_snow_step_TTF_VAL_S30_ROUTED
+--   WRK table: WRK_TTF_VAL_S3_ROUTED
+--     produced by : sp_snow_step_TTF_VAL_S30_ROUTED
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_VAL_S30_ROUTED.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Validation
+--     consumed by : wf_TTF_Stage_Load step 40 sp_snow_pub_TTF_VAL_EXC_STG_BAD_REC_MEMB; wf_TTF_Stage_Load step 50 sp_snow_pub_TTF_VAL_STG_TTF_PTY_INACTIVE_LOG_DEACTIVATION; wf_TTF_Stage_Load step 60 sp_snow_pub_TTF_VAL_STG_TTF_PTY_INACTIVE_STS; wf_TTF_Stage_Load step 70 sp_snow_pub_TTF_VAL_STG_TTF_PTY_INACTIVE_LOG_REACTIVATION
+--   Mapping: m_Tgt_C_S_TTF_Pty (driver sp_snow_main_m_Tgt_C_S_TTF_Pty)
+--   WRK table: WRK_TTF_PTY_S1_ACTIVE
+--     produced by : sp_snow_step_TTF_PTY_S10_ACTIVE
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_PTY_S10_ACTIVE.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty
+--     consumed by : wf_TTF_Stage_Load step 20 sp_snow_step_TTF_PTY_S20_DQ
+--   WRK table: WRK_TTF_PTY_S2_DQ
+--     produced by : sp_snow_step_TTF_PTY_S20_DQ
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_PTY_S20_DQ.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty
+--     consumed by : wf_TTF_Stage_Load step 30 sp_snow_step_TTF_PTY_S30_DQ2
+--   WRK table: WRK_TTF_PTY_S3_DQ2
+--     produced by : sp_snow_step_TTF_PTY_S30_DQ2
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_PTY_S30_DQ2.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty
+--     consumed by : wf_TTF_Stage_Load step 40 sp_snow_step_TTF_PTY_S40_ROUTED
+--   WRK table: WRK_TTF_PTY_S4_ROUTED
+--     produced by : sp_snow_step_TTF_PTY_S40_ROUTED
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_PTY_S40_ROUTED.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty
+--     consumed by : wf_TTF_Stage_Load step 50 sp_snow_pub_TTF_PTY_C_S_TTF_PTY; wf_TTF_Stage_Load step 60 sp_snow_pub_TTF_PTY_C_S_TTF_PTY_RLE; wf_TTF_Stage_Load step 70 sp_snow_pub_TTF_PTY_EXC_STG_BAD_REC_MEMB_GENDER; wf_TTF_Stage_Load step 80 sp_snow_pub_TTF_PTY_EXC_STG_BAD_REC_MEMB_BIRTH; wf_TTF_Stage_Load step 90 sp_snow_pub_TTF_PTY_EXC_STG_BAD_REC_MEMB_ETHNICITY; wf_TTF_Stage_Load step 100 sp_snow_pub_TTF_PTY_EXC_STG_BAD_REC_MEMB_RACE
+--   Mapping: m_Tgt_C_S_TTF_Pty_Rle_Alt_Id (driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Rle_Alt_Id)
+--   WRK table: WRK_TTF_ALT_S1_KEYS
+--     produced by : sp_snow_step_TTF_ALT_S10_KEYS
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_ALT_S10_KEYS.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Rle_Alt_Id
+--     consumed by : wf_TTF_Stage_Load step 20 sp_snow_step_TTF_ALT_S20_DEDUP
+--   WRK table: WRK_TTF_ALT_S2_DEDUP
+--     produced by : sp_snow_step_TTF_ALT_S20_DEDUP
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_ALT_S20_DEDUP.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Rle_Alt_Id
+--     consumed by : wf_TTF_Stage_Load step 30 sp_snow_pub_TTF_ALT_C_S_TTF_PTY_RLE_ALT_ID
+--   Mapping: m_Tgt_C_S_TTF_Pty_Rle_Phn (driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Rle_Phn)
+--   WRK table: WRK_TTF_PHN_S1_SRC
+--     produced by : sp_snow_step_TTF_PHN_S10_SRC
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_PHN_S10_SRC.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Rle_Phn
+--     consumed by : wf_TTF_Stage_Load step 20 sp_snow_step_TTF_PHN_S20_CHECKED
+--   WRK table: WRK_TTF_PHN_S2_CHECKED
+--     produced by : sp_snow_step_TTF_PHN_S20_CHECKED
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_PHN_S20_CHECKED.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Rle_Phn
+--     consumed by : wf_TTF_Stage_Load step 30 sp_snow_step_TTF_PHN_S30_ROUTED
+--   WRK table: WRK_TTF_PHN_S3_ROUTED
+--     produced by : sp_snow_step_TTF_PHN_S30_ROUTED
+--     CTAS in     : TTF/steps/sp_snow_step_TTF_PHN_S30_ROUTED.sql line 59
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_TTF_Pty_Rle_Phn
+--     consumed by : wf_TTF_Stage_Load step 40 sp_snow_pub_TTF_PHN_C_S_TTF_PTY_RLE_PHN; wf_TTF_Stage_Load step 50 sp_snow_pub_TTF_PHN_EXC_STG_BAD_REC_MEMB
+
+-- ----------------------------------------------------------------------------
+-- Workflow: wf_CRE_Stage_Load_Ongoing (5 WRK tables)
+-- ----------------------------------------------------------------------------
+--   Mapping: m_Tgt_C_S_CRE_CARE_Clients (driver sp_snow_main_m_Tgt_C_S_CRE_CARE_Clients)
+--   WRK table: WRK_CRE_CARE_S1_SRC_MRG
+--     produced by : sp_snow_step_CRE_CARE_S10_SRC_MRG
+--     CTAS in     : CRE/steps/sp_snow_step_CRE_CARE_S10_SRC_MRG.sql line 62
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_CRE_CARE_Clients
+--     consumed by : wf_CRE_Stage_Load_Ongoing step 20 sp_snow_step_CRE_CARE_S20_NAMED
+--   WRK table: WRK_CRE_CARE_S2_NAMED
+--     produced by : sp_snow_step_CRE_CARE_S20_NAMED
+--     CTAS in     : CRE/steps/sp_snow_step_CRE_CARE_S20_NAMED.sql line 62
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_CRE_CARE_Clients
+--     consumed by : wf_CRE_Stage_Load_Ongoing step 30 sp_snow_step_CRE_CARE_S30_RANKED
+--   WRK table: WRK_CRE_CARE_S3_RANKED
+--     produced by : sp_snow_step_CRE_CARE_S30_RANKED
+--     CTAS in     : CRE/steps/sp_snow_step_CRE_CARE_S30_RANKED.sql line 62
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_CRE_CARE_Clients
+--     consumed by : wf_CRE_Stage_Load_Ongoing step 40 sp_snow_step_CRE_CARE_S40_FLAT
+--   WRK table: WRK_CRE_CARE_S4_FLAT
+--     produced by : sp_snow_step_CRE_CARE_S40_FLAT
+--     CTAS in     : CRE/steps/sp_snow_step_CRE_CARE_S40_FLAT.sql line 65
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_CRE_CARE_Clients
+--     consumed by : wf_CRE_Stage_Load_Ongoing step 50 sp_snow_step_CRE_CARE_S50_KEYED
+--   WRK table: WRK_CRE_CARE_S5_KEYED
+--     produced by : sp_snow_step_CRE_CARE_S50_KEYED
+--     CTAS in     : CRE/steps/sp_snow_step_CRE_CARE_S50_KEYED.sql line 65
+--     dropped by  : step 5 of driver sp_snow_main_m_Tgt_C_S_CRE_CARE_Clients
+--     consumed by : wf_CRE_Stage_Load_Ongoing step 60 sp_snow_pub_CRE_CARE_CRE_SRC_MRG; wf_CRE_Stage_Load_Ongoing step 70 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_FIRST_NAME; wf_CRE_Stage_Load_Ongoing step 80 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_LAST_NAME; wf_CRE_Stage_Load_Ongoing step 90 sp_snow_pub_CRE_CARE_C_S_CRE_PTY; wf_CRE_Stage_Load_Ongoing step 100 sp_snow_pub_CRE_CARE_C_S_CRE_PTY_RLE; wf_CRE_Stage_Load_Ongoing step 110 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_GENDER; wf_CRE_Stage_Load_Ongoing step 120 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_SUFFIX; wf_CRE_Stage_Load_Ongoing step 130 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_ETHNICITY; wf_CRE_Stage_Load_Ongoing step 140 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_RACE; wf_CRE_Stage_Load_Ongoing step 150 sp_snow_pub_CRE_CARE_C_S_CRE_PTY_RLE_ADDR; wf_CRE_Stage_Load_Ongoing step 160 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_ADDR; wf_CRE_Stage_Load_Ongoing step 170 sp_snow_pub_CRE_CARE_C_S_CRE_PTY_RLE_PHN; wf_CRE_Stage_Load_Ongoing step 180 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_PHONE; wf_CRE_Stage_Load_Ongoing step 190 sp_snow_pub_CRE_CARE_C_S_CRE_PTY_RLE_ALT_ID_CARE; wf_CRE_Stage_Load_Ongoing step 200 sp_snow_pub_CRE_CARE_C_S_CRE_PTY_RLE_ALT_ID_MEDICAID; wf_CRE_Stage_Load_Ongoing step 210 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_MEDICAID_ALT; wf_CRE_Stage_Load_Ongoing step 220 sp_snow_pub_CRE_CARE_C_S_CRE_PTY_RLE_ALT_ID_SSN; wf_CRE_Stage_Load_Ongoing step 230 sp_snow_pub_CRE_CARE_EXC_STG_BAD_REC_MEMB_SSN_ALT
